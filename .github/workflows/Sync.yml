@@ -1,0 +1,30 @@
+name: Sync Releases
+on: workflow_dispatch
+
+jobs:
+  sync-releases:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Download Release
+      uses: actions/download-release@v1
+      with:
+        repository: OpenListTeam/musl-compilers
+        tag: 2025-06-12
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload to Current Repo
+      uses: actions/upload-release@v1
+      with:
+        tag_name: 2025-06-12
+        release_name: Archive of musl.cc at 2025-06-12
+        body: "Automatically synced release"
+        files: |
+          *.zip
+          *.tar.gz
+          *.tgz
+          *.html
+          *SHA512SUMS
+        token: ${{ secrets.GITHUB_TOKEN }}
