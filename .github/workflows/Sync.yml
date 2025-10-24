@@ -4,11 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       source_repo:
-        description: 'Ô´²Ö¿â (owner/repo)'
+        description: 'æºä»“åº“ (owner/repo)'
         required: true
         default: 'OpenListTeam/musl-compilers'
       tag:
-        description: 'Release ±êÇ©'
+        description: 'Release æ ‡ç­¾'
         required: true
         default: 'latest'
 
@@ -32,6 +32,6 @@ jobs:
         tag_name: ${{ github.event.inputs.tag }}
         files: ./downloaded-assets/*
         body: |
-          ´Ó ${{ github.event.inputs.source_repo }} ×Ô¶¯Í¬²½µÄ Release
-          Ô´±êÇ©: ${{ github.event.inputs.tag }}
+          ä» ${{ github.event.inputs.source_repo }} è‡ªåŠ¨åŒæ­¥çš„ Release
+          æºæ ‡ç­¾: ${{ github.event.inputs.tag }}
         token: ${{ secrets.GITHUB_TOKEN }}
