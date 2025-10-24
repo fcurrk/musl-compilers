@@ -10,28 +10,52 @@ on:
       tag:
         description: 'Release 标签'
         required: true
-        default: 'latest'
+        default: '2025-06-12'
+
+permissions:
+  contents: write
 
 jobs:
   sync-releases:
     runs-on: ubuntu-latest
     steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup GitHub CLI
+      run: |
+        # 安装 GitHub CLI
+        curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+        sudo apt update
+        sudo apt install gh -y
+
     - name: Download Release Assets
-      uses: svenstaro/download-release-action@v2
-      with:
-        repository: ${{ github.event.inputs.source_repo }}
-        tag: ${{ github.event.inputs.tag }}
-        out: ./downloaded-assets
+      run: |
+        echo "正在从 ${{ github.event.inputs.source_repo }} 下载 Release: ${{ github.event.inputs.tag }}"
+        gh release download --pattern "*" --dir ./downloaded-assets --repo "${{ github.event.inputs.source_repo }}" "${{ github.event.inputs.tag }}"
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     - name: List Downloaded Files
-      run: ls -la ./downloaded-assets
+      run: ls -la ./downloaded-assets/
 
-    - name: Create Release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ github.event.inputs.tag }}
-        files: ./downloaded-assets/*
-        body: |
-          从 ${{ github.event.inputs.source_repo }} 自动同步的 Release
-          源标签: ${{ github.event.inputs.tag }}
-        token: ${{ secrets.GITHUB_TOKEN }}
+    - name: Create Release in Current Repo
+      run: |
+        # 切换到下载的资产目录
+        cd ./downloaded-assets
+        
+        # 获取所有文件
+        files=$(find . -type f -name "*" | cut -c 3- | tr '\n' ' ')
+        
+        if [ -n "$files" ]; then
+          echo "正在上传文件: $files"
+          gh release create "${{ github.event.inputs.tag }}" $files \
+            --title "Release ${{ github.event.inputs.tag }}" \
+            --notes "从 ${{ github.event.inputs.source_repo }} 自动同步"
+        else
+          echo "没有找到可上传的文件"
+          exit 1
+        fi
+      env:
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
